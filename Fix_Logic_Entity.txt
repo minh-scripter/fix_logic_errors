@@ -547,7 +547,7 @@ function FixRoomLights(room)
     end
 end
 
--- FIXED FUNCTION: EntityMoveTo với cơ chế né vật thể (Raycast Avoidance)
+-- FIXED FUNCTION: Di chuyển thông minh (Né vật thể)
 function EntityMoveTo(model, cframe, speed)
 	local reached = false
 	local connection;
@@ -559,23 +559,21 @@ function EntityMoveTo(model, cframe, speed)
 			local magnitude = difference.Magnitude
 
 			if magnitude > 0.1 then
-				-- Hệ thống dò vật cản phía trước
+				-- Thiết lập tia dò vật cản (Raycasting)
 				local raycastParams = RaycastParams.new()
 				raycastParams.FilterDescendantsInstances = {model, localChar}
 				raycastParams.FilterType = Enum.RaycastFilterType.Exclude
 				
-				-- Dò phía trước entity (tầm xa 4-6 studs)
-				local rayResult = workspace:Raycast(pivot.Position, unit * 6, raycastParams)
-				
-				local moveVector = unit * math.min(step * speed, magnitude)
+				-- Dò phía trước 5 studs theo hướng đi
+				local rayResult = workspace:Raycast(pivot.Position, unit * 5, raycastParams)
 				
 				if rayResult and rayResult.Instance and rayResult.Instance.CanCollide then
-					-- Nếu thấy tường, tính toán vector né (đi chệch hướng 45 độ)
-					local avoidVector = Vector3.new(-unit.Z, 0, unit.X) * 2 -- Tạo vector vuông góc
-					model:PivotTo(pivot + (moveVector + avoidVector).Unit * math.min(step * speed, magnitude))
+					-- Nếu có vật cản, tạo lực đẩy né sang bên (vuông góc hướng đi)
+					local avoidDir = Vector3.new(-unit.Z, 0, unit.X) * 2
+					model:PivotTo(pivot + (unit + avoidDir).Unit * math.min(step * speed, magnitude))
 				else
-					-- Nếu đường trống, đi bình thường
-					model:PivotTo(pivot + moveVector)
+					-- Đường trống thì đi thẳng bình thường
+					model:PivotTo(pivot + unit * math.min(step * speed, magnitude))
 				end
 			else
 				connection:Disconnect()
@@ -909,7 +907,7 @@ spawner.Run = function(entityTable)
 					for _, n in nodesToCurrent do
 						local cframe = n.CFrame + Vector3.new(0, 3 + config.Entity.HeightOffset, 0)
 						EntityMoveTo(model, cframe, config.Movement.Speed)
-						task.spawn(entityTable.RunCallback, entityTable, "OnReachNode", n) -- OnReachNode
+						task.spawn(entityTable.RunCallback, entityTable, "OnReachedNode", n) -- OnReachedNode
 					end
 					
 					-- Rebounding handling
@@ -944,7 +942,7 @@ spawner.Run = function(entityTable)
 							for i = #roomNodes, nodeIndex, -1 do
 								local cframe = roomNodes[math.clamp(i, 1, #roomNodes)].CFrame + Vector3.new(0, 3 + config.Entity.HeightOffset, 0)
 								EntityMoveTo(model, cframe, config.Movement.Speed)
-								task.spawn(entityTable.RunCallback, entityTable, "OnReachNode", n) -- OnReachNode
+								task.spawn(entityTable.RunCallback, entityTable, "OnReachedNode", n) -- OnReachedNode
 							end
 							
 							task.wait(config.Rebounding.Delay)
@@ -954,7 +952,7 @@ spawner.Run = function(entityTable)
 							for i = nodeIndex, #roomNodes, 1 do
 								local cframe = roomNodes[math.clamp(i, 1, #roomNodes)].CFrame + Vector3.new(0, 3 + config.Entity.HeightOffset, 0)
 								EntityMoveTo(model, cframe, config.Movement.Speed)
-								task.spawn(entityTable.RunCallback, entityTable, "OnReachNode", n) -- OnReachNode
+								task.spawn(entityTable.RunCallback, entityTable, "OnReachedNode", n) -- OnReachedNode
 							end
 						end
 					end
@@ -963,7 +961,7 @@ spawner.Run = function(entityTable)
 					for _, n in updatedToEnd do
 						local cframe = n.CFrame + Vector3.new(0, 3 + config.Entity.HeightOffset, 0)
 						EntityMoveTo(model, cframe, config.Movement.Speed)
-						task.spawn(entityTable.RunCallback, entityTable, "OnReachNode", n) -- OnReachNode
+						task.spawn(entityTable.RunCallback, entityTable, "OnReachedNode", n) -- OnReachedNode
 					end
 				else
 					-- Ambush rebounding
@@ -971,7 +969,7 @@ spawner.Run = function(entityTable)
 					for _, n in pathfindNodes do
 						local cframe = n.CFrame + Vector3.new(0, 3 + config.Entity.HeightOffset, 0)
 						EntityMoveTo(model, cframe, config.Movement.Speed)
-						task.spawn(entityTable.RunCallback, entityTable, "OnReachNode", n) -- OnReachNode
+						task.spawn(entityTable.RunCallback, entityTable, "OnReachedNode", n) -- OnReachedNode
 					end
 					
 					-- Rebounding handling
@@ -986,7 +984,7 @@ spawner.Run = function(entityTable)
 							for i = #pathfindNodes, 1, -1 do
 								local cframe = pathfindNodes[i].CFrame + Vector3.new(0, 3 + config.Entity.HeightOffset, 0)
 								EntityMoveTo(model, cframe, config.Movement.Speed)
-								task.spawn(entityTable.RunCallback, entityTable, "OnReachNode", n) -- OnReachNode
+								task.spawn(entityTable.RunCallback, entityTable, "OnReachedNode", n) -- OnReachedNode
 							end
 	
 							task.spawn(entityTable.RunCallback, entityTable, "OnRebounding", false) -- OnRebounding
@@ -999,7 +997,7 @@ spawner.Run = function(entityTable)
 							for _, n in pathfindNodes do
 								local cframe = n.CFrame + Vector3.new(0, 3 + config.Entity.HeightOffset, 0)
 								EntityMoveTo(model, cframe, config.Movement.Speed)
-								task.spawn(entityTable.RunCallback, entityTable, "OnReachNode", n) -- OnReachNode
+								task.spawn(entityTable.RunCallback, entityTable, "OnReachedNode", n) -- OnReachedNode
 							end
 	
 							task.spawn(entityTable.RunCallback, entityTable, "OnRebounding", false) -- OnRebounding
