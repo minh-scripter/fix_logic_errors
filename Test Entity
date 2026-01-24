@@ -19,10 +19,10 @@ local entity = spawner.Create({
 		Repair = false
 	},
 	Earthquake = {
-		Enabled = true
+		Enabled = false
 	},
 	CameraShake = {
-		Enabled = true,
+		Enabled = false,
 		Range = 50,
 		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
 	},
@@ -51,7 +51,7 @@ local entity = spawner.Create({
 	},
 	Death = {
 		Type = "Guiding", -- "Curious"
-		Hints = {"Death", "Hints", "Go", "Here"},
+		Hints = {"Death by depth", "Hints"},
 		Cause = ""
 	}
 })
